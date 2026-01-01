@@ -1,0 +1,49 @@
+package com.kartik.Trading.model;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "transactions")
+public class Transaction {
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private long id;
+	
+	@ManyToOne
+	@JoinColumn(name = "wallet_id", nullable = false)
+	private Wallet wallet;
+	
+	@Column(nullable = false)
+	private BigDecimal amount;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private TransactionType type;
+	
+	@Column(nullable = false)
+	private LocalDateTime timestamp;
+	
+	protected Transaction() {}
+	
+	public Transaction(Wallet wallet,
+			BigDecimal amount,
+			TransactionType type) {
+		this.wallet = wallet;
+		this.amount = amount;
+		this.type = type;
+		this.timestamp = LocalDateTime.now();
+	}
+}
