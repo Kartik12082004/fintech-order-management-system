@@ -61,4 +61,44 @@ public class TradeService {
 		
 		walletRepository.save(wallet);
 	}
+	
+	@Transactional
+	public void sell(User user, String assetSymbol, BigDecimal quantity) {
+		
+		if(quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("Quantity must be positive");
+		}
+		
+		Asset asset = assetRepository.findBySymbol(assetSymbol)
+				.orElseThrow(() -> new IllegalArgumentException("Asset not found"));
+		
+		Wallet wallet = walletRepository.findByUserId(user.getId())
+				.orElseThrow(() -> new IllegalStateException("Wallet not initialized"));
+		
+		BigDecimal ownedQuantity = tradeRepository.getNetQuantity(user, asset);
+		
+		if (ownedQuantity.compareTo(quantity) < 0) {
+			throw new IllegalStateException("Insufficient asset quantity");
+		}
+		
+		BigDecimal totalCredit = asset.getPrice().multiply(quantity);
+		
+		wallet.credit(totalCredit);
+		
+		Trade trade = new Trade(user, asset, quantity, asset.getPrice(), TradeType.SELl);
+		tradeRepository.save(trade);
+		
+		Transaction tx = new Transaction(wallet, totalCredit, TransactionType.CREDIT);
+		transactionRepository.save(tx);
+		
+		walletRepository.save(wallet);
+	}
+	
+	public BigDecimal getHolding(User user, String assetSymbol) {
+		
+		Asset asset = assetRepository.findBySymbol(assetSymbol)
+				.orElseThrow(() -> new IllegalArgumentException("Asset not found"));
+		
+		return tradeRepository.getNetQuantity(user, asset);
+	}
 }
