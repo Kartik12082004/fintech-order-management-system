@@ -49,9 +49,8 @@ public class AuthController {
 		user.setPassword(passwordEncoder.encode(req.get("password")));
 		userRepository.save(user);
 		
-		Wallet wallet = new Wallet();
-		wallet.setUser(user);
-		wallet.setBalance(BigDecimal.valueOf(10000));
+		Wallet wallet = new Wallet(user);
+		wallet.credit(BigDecimal.valueOf(10000));
 		walletRepository.save(wallet);
 		
 		return "User Registered";
