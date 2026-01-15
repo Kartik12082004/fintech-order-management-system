@@ -16,7 +16,7 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtil {
 	
-	private final String SECRET_KEY = "YOUR_SECRET_KEY";
+	private final String SECRET_KEY = "sscTqlbxWhnKEAJOEH_L5um2dxWwmQ_j8JIOnaO2GN5tdOLao1LUj5IwWh0zMWDi";
 	private final long EXPIRATION_TIME = 1000 * 60 * 60;
 	
 	private final SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(SECRET_KEY));

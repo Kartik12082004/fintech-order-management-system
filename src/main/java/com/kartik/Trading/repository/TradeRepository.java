@@ -17,8 +17,8 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
 	@Query("""
 			SELECT COALESCE(SUM(
 				CASE
-					WHEN t.tradetype = 'BUY' THEN t.quanity
-					WHEN t.tradetype = 'SELL' THEN -t.quantity
+					WHEN t.tradeType = 'BUY' THEN t.quantity
+					WHEN t.tradeType = 'SELL' THEN -t.quantity
 				END
 			), 0)
 			FROM Trade t
