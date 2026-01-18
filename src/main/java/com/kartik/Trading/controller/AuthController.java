@@ -19,10 +19,13 @@ import com.kartik.Trading.repository.UserRepository;
 import com.kartik.Trading.repository.WalletRepository;
 import com.kartik.Trading.security.JwtUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Authentication", description = "User registration and login APIs")
 public class AuthController {
 	
 	private final UserRepository userRepository;
@@ -45,6 +48,10 @@ public class AuthController {
 		
 	}
 	
+	@Operation(
+			summary = "Register a new user",
+			description = "Creates a new user account and initializes wallet with zero balance"
+	)
 	@PostMapping("/register")
 	public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
 		User user = new User();
@@ -58,6 +65,10 @@ public class AuthController {
 		return ResponseEntity.ok("User registered successfully");
 	}
 	
+	@Operation(
+		    summary = "Login user",
+		    description = "Authenticates user and returns JWT token"
+	)
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
 	    
