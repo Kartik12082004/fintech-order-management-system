@@ -59,6 +59,12 @@ public class WalletService {
 		walletRepository.save(wallet);
 	}
 	
+	public Wallet getWalletByUser(User user) {
+	    return walletRepository.findByUserId(user.getId())
+	            .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
+	}
+
+	
 	public List<Transaction> getTransactions(User user){
 		
 		Wallet wallet = walletRepository.findByUserId(user.getId())
