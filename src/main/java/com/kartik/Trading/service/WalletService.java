@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kartik.Trading.exception.InsufficientBalanceException;
 import com.kartik.Trading.model.Transaction;
+import com.kartik.Trading.model.TransactionSource;
 import com.kartik.Trading.model.TransactionType;
 import com.kartik.Trading.model.User;
 import com.kartik.Trading.model.Wallet;
@@ -34,7 +35,7 @@ public class WalletService {
 		
 		wallet.credit(amount);
 		
-		Transaction tx = new Transaction(wallet, amount, TransactionType.CREDIT);
+		Transaction tx = new Transaction(wallet, amount, TransactionType.CREDIT, TransactionSource.USER);
 		transactionRepository.save(tx);
 		
 		walletRepository.save(wallet);
@@ -53,7 +54,20 @@ public class WalletService {
 		
 		wallet.debit(amount);
 		
-		Transaction tx = new Transaction(wallet, amount, TransactionType.DEBIT);
+		Transaction tx = new Transaction(wallet, amount, TransactionType.DEBIT, TransactionSource.USER);
+		transactionRepository.save(tx);
+		
+		walletRepository.save(wallet);
+	}
+	
+	@Transactional
+	public void systemCredit(User user, BigDecimal amount) {
+		Wallet wallet = walletRepository.findByUserId(user.getId())
+				.orElseThrow(() -> new IllegalStateException("Wallet not initialized"));
+		
+		wallet.credit(amount);
+		
+		Transaction tx = new Transaction(wallet, amount, TransactionType.CREDIT, TransactionSource.SYSTEM);
 		transactionRepository.save(tx);
 		
 		walletRepository.save(wallet);

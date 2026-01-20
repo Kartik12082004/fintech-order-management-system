@@ -33,17 +33,23 @@ public class Transaction {
 	@Column(nullable = false)
 	private TransactionType type;
 	
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private TransactionSource source;
+	
 	@Column(nullable = false)
 	private LocalDateTime timestamp;
 	
 	protected Transaction() {}
 	
 	public Transaction(Wallet wallet,
-			BigDecimal amount,
-			TransactionType type) {
+					   BigDecimal amount,
+					   TransactionType type,
+					   TransactionSource source) {
 		this.wallet = wallet;
 		this.amount = amount;
 		this.type = type;
+		this.source = source;
 		this.timestamp = LocalDateTime.now();
 	}
 }

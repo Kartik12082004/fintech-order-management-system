@@ -1,14 +1,17 @@
 package com.kartik.Trading.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kartik.Trading.exception.InsufficientBalanceException;
 import com.kartik.Trading.model.Asset;
 import com.kartik.Trading.model.Trade;
 import com.kartik.Trading.model.TradeType;
 import com.kartik.Trading.model.Transaction;
+import com.kartik.Trading.model.TransactionSource;
 import com.kartik.Trading.model.TransactionType;
 import com.kartik.Trading.model.User;
 import com.kartik.Trading.model.Wallet;
@@ -49,14 +52,21 @@ public class TradeService {
 		Wallet wallet = walletRepository.findByUserId(user.getId())
 				.orElseThrow(() -> new IllegalStateException("Wallet not initialized"));
 		
-		BigDecimal totalCost = asset.getPrice().multiply(quantity);
-		
+		BigDecimal totalCost = asset.getPrice()
+		        .multiply(quantity)
+		        .setScale(2, RoundingMode.HALF_UP);
+
+		if (wallet.getBalance().compareTo(totalCost) < 0) {
+		    throw new InsufficientBalanceException();
+		}
+
 		wallet.debit(totalCost);
+
 		
 		Trade trade = new Trade(user, asset, quantity, asset.getPrice(), TradeType.BUY);
 		tradeRepository.save(trade);
 		
-		Transaction tx = new Transaction(wallet, totalCost, TransactionType.DEBIT);
+		Transaction tx = new Transaction(wallet, totalCost, TransactionType.DEBIT, TransactionSource.USER);
 		transactionRepository.save(tx);
 		
 		walletRepository.save(wallet);
@@ -88,7 +98,7 @@ public class TradeService {
 		Trade trade = new Trade(user, asset, quantity, asset.getPrice(), TradeType.SELl);
 		tradeRepository.save(trade);
 		
-		Transaction tx = new Transaction(wallet, totalCredit, TransactionType.CREDIT);
+		Transaction tx = new Transaction(wallet, totalCredit, TransactionType.CREDIT, TransactionSource.USER);
 		transactionRepository.save(tx);
 		
 		walletRepository.save(wallet);

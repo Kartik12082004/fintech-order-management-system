@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kartik.Trading.dto.request.LoginRequest;
 import com.kartik.Trading.dto.request.RegisterRequest;
+import com.kartik.Trading.dto.response.AuthResponse;
+import com.kartik.Trading.model.Role;
 import com.kartik.Trading.model.User;
 import com.kartik.Trading.model.Wallet;
 import com.kartik.Trading.repository.UserRepository;
@@ -57,6 +59,7 @@ public class AuthController {
 		User user = new User();
 		user.setEmail(request.getEmail());
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
+		user.setRole(Role.ROLE_USER);
 		userRepository.save(user);
 		
 		Wallet wallet = new Wallet(user);
@@ -80,7 +83,7 @@ public class AuthController {
 		    );
 
 		    String token = jwtUtil.generateToken(authentication.getName());
-		    return ResponseEntity.ok(token);
+		    return ResponseEntity.ok(new AuthResponse(token));
 		    
 	}
 	
