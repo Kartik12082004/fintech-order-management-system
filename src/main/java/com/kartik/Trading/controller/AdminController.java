@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kartik.Trading.dto.request.AdminFundWalletRequest;
+import com.kartik.Trading.dto.request.CreateAssetRequest;
 import com.kartik.Trading.model.User;
 import com.kartik.Trading.repository.UserRepository;
+import com.kartik.Trading.service.AssetService;
 import com.kartik.Trading.service.WalletService;
 
 import jakarta.validation.Valid;
@@ -23,14 +25,17 @@ public class AdminController {
 	
 	private final UserRepository userRepository;
 	private final WalletService walletService;
+	private final AssetService assetService;
 	
 	public AdminController(UserRepository userRepository,
-						   WalletService walletService) {
+						   WalletService walletService,
+						   AssetService assetService) {
 		this.userRepository = userRepository;
 		this.walletService = walletService;
+		this.assetService = assetService;
 	}
 	
-	@PostMapping("fund-wallet")
+	@PostMapping("/fund-wallet")
 	public ResponseEntity<?> fundWallet(@Valid @RequestBody AdminFundWalletRequest request){
 		
 		User user = userRepository.findByEmail(request.getUserEmail())
@@ -47,5 +52,21 @@ public class AdminController {
 		);
 		
 	}
+	
+	@PostMapping("/asset")
+	public ResponseEntity<?> createAsset(@Valid @RequestBody CreateAssetRequest request) {
+	    
+		assetService.createAsset(
+	            request.getSymbol(),
+	            request.getPrice()
+	    );
+
+	    return ResponseEntity.ok(Map.of(
+	            "message", "Asset created successfully",
+	            "symbol", request.getSymbol(),
+	            "price", request.getPrice()
+	    ));
+	}
+
 	
 }
