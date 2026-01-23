@@ -13,6 +13,7 @@ import com.kartik.Trading.model.User;
 
 public interface TradeRepository extends JpaRepository<Trade, Long> {
 	List<Trade> findByUser(User user);
+	List<Trade> findByUserOrderByExecutedAtDesc(User user);
 	
 	@Query("""
 			SELECT COALESCE(SUM(

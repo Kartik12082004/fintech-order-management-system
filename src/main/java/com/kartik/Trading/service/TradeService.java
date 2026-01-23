@@ -2,10 +2,14 @@ package com.kartik.Trading.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kartik.Trading.dto.response.PortfolioResponse;
+import com.kartik.Trading.dto.response.TradeHistoryResponse;
 import com.kartik.Trading.exception.InsufficientBalanceException;
 import com.kartik.Trading.model.Asset;
 import com.kartik.Trading.model.Trade;
@@ -111,4 +115,41 @@ public class TradeService {
 		
 		return tradeRepository.getNetQuantity(user, asset);
 	}
+	
+	public List<PortfolioResponse> getPortfolio(User user) {
+	    List<Asset> assets = assetRepository.findAll();
+
+	    return assets.stream()
+	            .map(asset -> {
+	                BigDecimal qty = tradeRepository.getNetQuantity(user, asset);
+
+	                if (qty.compareTo(BigDecimal.ZERO) <= 0) {
+	                    return null;
+	                }
+
+	                return new PortfolioResponse(
+	                        asset.getSymbol(),
+	                        qty,
+	                        asset.getPrice(),
+	                        qty.multiply(asset.getPrice())
+	                );
+	            })
+	            .filter(Objects::nonNull)
+	            .toList();
+	}
+
+	public List<TradeHistoryResponse> getTradeHistory(User user) {
+	    return tradeRepository
+	            .findByUserOrderByExecutedAtDesc(user)
+	            .stream()
+	            .map(trade -> new TradeHistoryResponse(
+	                    trade.getAsset().getSymbol(),
+	                    trade.getQuantity(),
+	                    trade.getPriceAtExecution(),
+	                    trade.getTradeType(),
+	                    trade.getExecutedAt()
+	            ))
+	            .toList();
+	}
+	
 }
