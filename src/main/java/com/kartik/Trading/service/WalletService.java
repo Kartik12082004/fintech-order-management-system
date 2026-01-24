@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kartik.Trading.dto.response.TransactionResponse;
 import com.kartik.Trading.exception.InsufficientBalanceException;
 import com.kartik.Trading.model.Transaction;
 import com.kartik.Trading.model.TransactionSource;
@@ -86,5 +87,23 @@ public class WalletService {
 		
 		return transactionRepository.findByWallet(wallet);
 	}
+	
+	public List<TransactionResponse> getTransactionHistory(User user) {
+
+	    Wallet wallet = walletRepository.findByUserId(user.getId())
+	            .orElseThrow(() -> new IllegalStateException("Wallet not found"));
+
+	    return transactionRepository
+	            .findByWalletOrderByTimestampDesc(wallet)
+	            .stream()
+	            .map(tx -> new TransactionResponse(
+	                    tx.getAmount(),
+	                    tx.getType(),
+	                    tx.getSource(),
+	                    tx.getTimestamp()
+	            ))
+	            .toList();
+	}
+
 	
 }

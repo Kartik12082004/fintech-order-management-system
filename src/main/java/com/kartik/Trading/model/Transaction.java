@@ -13,9 +13,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "transactions")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Transaction {
 	
 	@Id
@@ -39,8 +44,6 @@ public class Transaction {
 	
 	@Column(nullable = false)
 	private LocalDateTime timestamp;
-	
-	protected Transaction() {}
 	
 	public Transaction(Wallet wallet,
 					   BigDecimal amount,
