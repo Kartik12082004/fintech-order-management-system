@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,8 @@ import com.kartik.Trading.repository.WalletRepository;
 @Service
 public class TradeService {
 	
+	private static final Logger log = LoggerFactory.getLogger(TradeService.class);
+	
 	private final WalletRepository walletRepository;
 	private final AssetRepository assetRepository;
 	private final TradeRepository tradeRepository;
@@ -45,6 +49,8 @@ public class TradeService {
 	
 	@Transactional
 	public void buy(User user, String assetSymbol, BigDecimal quantity) {
+		
+		log.info("BUY request | user={} asset={} qty={}", user.getEmail(), assetSymbol, quantity);
 		
 		if(quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 			throw new IllegalArgumentException("Quantity must be positive");
@@ -74,10 +80,15 @@ public class TradeService {
 		transactionRepository.save(tx);
 		
 		walletRepository.save(wallet);
+		
+		log.info("BUY successful | user={} asset={} cost={}", user.getEmail(), assetSymbol, totalCost);
+	
 	}
 	
 	@Transactional
 	public void sell(User user, String assetSymbol, BigDecimal quantity) {
+		
+		log.info("SELL request | user={} asset={} qty={}", user.getEmail(), assetSymbol, quantity);
 		
 		if(quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 			throw new IllegalArgumentException("Quantity must be positive");
@@ -95,17 +106,19 @@ public class TradeService {
 			throw new IllegalStateException("Insufficient asset quantity");
 		}
 		
-		BigDecimal totalCredit = asset.getPrice().multiply(quantity);
+		BigDecimal totalCredit = asset.getPrice().multiply(quantity).setScale(2, RoundingMode.HALF_UP);
 		
 		wallet.credit(totalCredit);
 		
-		Trade trade = new Trade(user, asset, quantity, asset.getPrice(), TradeType.SELl);
+		Trade trade = new Trade(user, asset, quantity, asset.getPrice(), TradeType.SELL);
 		tradeRepository.save(trade);
 		
 		Transaction tx = new Transaction(wallet, totalCredit, TransactionType.CREDIT, TransactionSource.USER);
 		transactionRepository.save(tx);
 		
 		walletRepository.save(wallet);
+		
+		log.info("SELL successful | user={} asset={} credit={}", user.getEmail(), assetSymbol, totalCredit);
 	}
 	
 	public BigDecimal getHolding(User user, String assetSymbol) {

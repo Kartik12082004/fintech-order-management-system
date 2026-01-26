@@ -1,6 +1,7 @@
 package com.kartik.Trading.controller;
 
-import java.math.BigDecimal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +31,8 @@ import jakarta.validation.Valid;
 @Tag(name = "Authentication", description = "User registration and login APIs")
 public class AuthController {
 	
+	private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+	
 	private final UserRepository userRepository;
 	private final WalletRepository walletRepository;
 	private final AuthenticationManager authenticationManager;
@@ -56,6 +59,15 @@ public class AuthController {
 	)
 	@PostMapping("/register")
 	public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+		
+		log.info("Registration attempt for email={}", request.getEmail());
+		
+		if (userRepository.existsByEmail(request.getEmail())) {
+		    log.warn("Registration failed — email already exists={}", request.getEmail());
+		    throw new IllegalArgumentException("Email already registered");
+		}
+
+		
 		User user = new User();
 		user.setEmail(request.getEmail());
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -64,6 +76,8 @@ public class AuthController {
 		
 		Wallet wallet = new Wallet(user);
 		walletRepository.save(wallet);
+		
+		log.info("User registered successfully email={}", request.getEmail());
 		
 		return ResponseEntity.ok("User registered successfully");
 	}
@@ -75,6 +89,8 @@ public class AuthController {
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
 	    
+		log.info("Login attempt for email={}", request.getEmail());
+		
 		Authentication authentication = authenticationManager.authenticate(
 		        new UsernamePasswordAuthenticationToken(
 		            request.getEmail(),
@@ -83,6 +99,9 @@ public class AuthController {
 		    );
 
 		    String token = jwtUtil.generateToken(authentication.getName());
+		    
+		    log.info("Login successful for email={}", request.getEmail());
+		    
 		    return ResponseEntity.ok(new AuthResponse(token));
 		    
 	}

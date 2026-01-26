@@ -9,11 +9,15 @@ import org.springframework.data.repository.query.Param;
 
 import com.kartik.Trading.model.Asset;
 import com.kartik.Trading.model.Trade;
+import com.kartik.Trading.model.TradeType;
 import com.kartik.Trading.model.User;
 
 public interface TradeRepository extends JpaRepository<Trade, Long> {
 	List<Trade> findByUser(User user);
 	List<Trade> findByUserOrderByExecutedAtDesc(User user);
+	
+	long countByTradeType(TradeType tradeType);
+
 	
 	@Query("""
 			SELECT COALESCE(SUM(

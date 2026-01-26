@@ -3,6 +3,8 @@ package com.kartik.Trading.service;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,8 @@ import com.kartik.Trading.repository.WalletRepository;
 @Service
 public class WalletService {
 	
+	private static final Logger log = LoggerFactory.getLogger(WalletService.class);
+	
 	private final WalletRepository walletRepository;
 	private final TransactionRepository transactionRepository;
 	
@@ -31,6 +35,8 @@ public class WalletService {
 	@Transactional
 	public void credit(User user, BigDecimal amount) {
 		
+		log.info("Wallet credit requested | user={} amount={}", user.getEmail(), amount);
+		
 		Wallet wallet = walletRepository.findByUserId(user.getId())
 				.orElseThrow(() -> new IllegalStateException("Wallet not initialized for user"));
 		
@@ -41,15 +47,20 @@ public class WalletService {
 		
 		walletRepository.save(wallet);
 		
+		log.info("Wallet credited successfully | user={} newBalance={}", user.getEmail(), wallet.getBalance());
+		
 	}
 	
 	@Transactional
 	public void debit(User user, BigDecimal amount) {
 		
+		log.info("Wallet debit requested | user={} amount={}", user.getEmail(), amount);
+		
 		Wallet wallet = walletRepository.findByUserId(user.getId())
 				.orElseThrow(() -> new IllegalStateException("Wallet not initialized for user"));
 		
 		if(wallet.getBalance().compareTo(amount) < 0) {
+			 log.warn("INSUFFICIENT BALANCE | user={} balance={} requested={}", user.getEmail(), wallet.getBalance(), amount);
 			throw new InsufficientBalanceException();
 		}
 		
@@ -59,10 +70,15 @@ public class WalletService {
 		transactionRepository.save(tx);
 		
 		walletRepository.save(wallet);
+		
+		log.info("Wallet debited successfully | user={} newBalance={}", user.getEmail(), wallet.getBalance());
 	}
 	
 	@Transactional
 	public void systemCredit(User user, BigDecimal amount) {
+		
+		log.warn("SYSTEM CREDIT | user={} amount={}", user.getEmail(), amount);
+		
 		Wallet wallet = walletRepository.findByUserId(user.getId())
 				.orElseThrow(() -> new IllegalStateException("Wallet not initialized"));
 		

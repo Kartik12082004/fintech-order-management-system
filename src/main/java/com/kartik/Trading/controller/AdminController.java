@@ -2,6 +2,8 @@ package com.kartik.Trading.controller;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +25,8 @@ import jakarta.validation.Valid;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 	
+	private static final Logger log = LoggerFactory.getLogger(AdminController.class);
+	
 	private final UserRepository userRepository;
 	private final WalletService walletService;
 	private final AssetService assetService;
@@ -37,6 +41,8 @@ public class AdminController {
 	
 	@PostMapping("/fund-wallet")
 	public ResponseEntity<?> fundWallet(@Valid @RequestBody AdminFundWalletRequest request){
+		
+		log.warn("ADMIN funding wallet | targetUser={} amount={}", request.getUserEmail(), request.getAmount());
 		
 		User user = userRepository.findByEmail(request.getUserEmail())
 				.orElseThrow(() -> new IllegalArgumentException("User not found"));
