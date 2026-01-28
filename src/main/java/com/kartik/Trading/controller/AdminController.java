@@ -18,11 +18,14 @@ import com.kartik.Trading.repository.UserRepository;
 import com.kartik.Trading.service.AssetService;
 import com.kartik.Trading.service.WalletService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "Admin Operations", description = "Admin-only APIs for managing users, wallets and assets")
 public class AdminController {
 	
 	private static final Logger log = LoggerFactory.getLogger(AdminController.class);
@@ -39,6 +42,13 @@ public class AdminController {
 		this.assetService = assetService;
 	}
 	
+	@Operation(
+	    summary = "Fund a user's wallet",
+	    description = """
+	        Allows an admin to credit a user's wallet.
+	        This is a SYSTEM-level credit and is recorded as an admin audit action.
+	    """
+	)
 	@PostMapping("/fund-wallet")
 	public ResponseEntity<?> fundWallet(@Valid @RequestBody AdminFundWalletRequest request){
 		
@@ -59,6 +69,13 @@ public class AdminController {
 		
 	}
 	
+	@Operation(
+		summary = "Create a new tradable asset",
+		description = """
+		    Creates a new asset that will be visible in the public market API
+		    and available for user trading.
+		"""
+	)
 	@PostMapping("/asset")
 	public ResponseEntity<?> createAsset(@Valid @RequestBody CreateAssetRequest request) {
 	    
