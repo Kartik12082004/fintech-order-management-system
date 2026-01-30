@@ -2,8 +2,6 @@ package com.kartik.Trading.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -48,37 +46,39 @@ public class AdminAuditLogService {
     }
     
     @Transactional(readOnly = true)
-    public List<AdminAuditLog> getAllLogs() {
-        return adminAuditLogRepository.findAllByOrderByTimestampDesc();
-    }
-
-    @Transactional(readOnly = true)
-    public List<AdminAuditLog> getLogsByAdmin(String adminEmail) {
-        return adminAuditLogRepository
-                .findByPerformedByOrderByTimestampDesc(adminEmail);
-    }
-
-    @Transactional(readOnly = true)
-    public List<AdminAuditLog> getLogsForUser(String userEmail) {
-        return adminAuditLogRepository
-                .findByTargetUserOrderByTimestampDesc(userEmail);
-    }
-    
-    @Transactional(readOnly = true)
     public Page<AdminAuditLog> getLogs(
             String targetUser,
             LocalDateTime from,
             LocalDateTime to,
             Pageable pageable
     ) {
+        
+        LocalDateTime effectiveFrom =
+                (from != null) ? from : LocalDateTime.of(2000, 1, 1, 0, 0);
+
+        LocalDateTime effectiveTo =
+                (to != null) ? to : LocalDateTime.now();
+
+        log.info(
+            "Fetching admin audit logs | targetUser={} from={} to={} page={} size={}",
+            targetUser, effectiveFrom, effectiveTo,
+            pageable.getPageNumber(), pageable.getPageSize()
+        );
 
         if (targetUser != null && !targetUser.isBlank()) {
             return adminAuditLogRepository.findByTargetUserAndTimestampBetween(
-                    targetUser, from, to, pageable
+                    targetUser,
+                    effectiveFrom,
+                    effectiveTo,
+                    pageable
             );
         }
 
-        return adminAuditLogRepository.findByTimestampBetween(from, to, pageable);
+        return adminAuditLogRepository.findByTimestampBetween(
+                effectiveFrom,
+                effectiveTo,
+                pageable
+        );
     }
 	
 }

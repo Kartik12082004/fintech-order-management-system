@@ -12,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kartik.Trading.dto.response.PortfolioResponse;
 import com.kartik.Trading.dto.response.TradeHistoryResponse;
+import com.kartik.Trading.exception.ConflictException;
 import com.kartik.Trading.exception.InsufficientBalanceException;
+import com.kartik.Trading.exception.ResourceNotFoundException;
 import com.kartik.Trading.model.Asset;
 import com.kartik.Trading.model.Trade;
 import com.kartik.Trading.model.TradeType;
@@ -28,141 +30,153 @@ import com.kartik.Trading.repository.WalletRepository;
 
 @Service
 public class TradeService {
-	
-	private static final Logger log = LoggerFactory.getLogger(TradeService.class);
-	
-	private final WalletRepository walletRepository;
-	private final AssetRepository assetRepository;
-	private final TradeRepository tradeRepository;
-	private final TransactionRepository transactionRepository;
-	
-	public TradeService(WalletRepository walletRepository,
-			AssetRepository assetRepository,
-			TradeRepository tradeRepository,
-			TransactionRepository transactionRepository) {
-		
-		this.walletRepository = walletRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(TradeService.class);
+
+    private final WalletRepository walletRepository;
+    private final AssetRepository assetRepository;
+    private final TradeRepository tradeRepository;
+    private final TransactionRepository transactionRepository;
+
+    public TradeService(
+            WalletRepository walletRepository,
+            AssetRepository assetRepository,
+            TradeRepository tradeRepository,
+            TransactionRepository transactionRepository
+    ) {
+        this.walletRepository = walletRepository;
         this.assetRepository = assetRepository;
         this.tradeRepository = tradeRepository;
         this.transactionRepository = transactionRepository;
-	}
-	
-	@Transactional
-	public void buy(User user, String assetSymbol, BigDecimal quantity) {
-		
-		log.info("BUY request | user={} asset={} qty={}", user.getEmail(), assetSymbol, quantity);
-		
-		if(quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
-			throw new IllegalArgumentException("Quantity must be positive");
-		}
-		
-		Asset asset = assetRepository.findBySymbol(assetSymbol)
-				.orElseThrow(() -> new IllegalArgumentException("Asset not found"));
-		
-		Wallet wallet = walletRepository.findByUserId(user.getId())
-				.orElseThrow(() -> new IllegalStateException("Wallet not initialized"));
-		
-		BigDecimal totalCost = asset.getPrice()
-		        .multiply(quantity)
-		        .setScale(2, RoundingMode.HALF_UP);
+    }
 
-		if (wallet.getBalance().compareTo(totalCost) < 0) {
-		    throw new InsufficientBalanceException();
-		}
+    @Transactional
+    public void buy(User user, String assetSymbol, BigDecimal quantity) {
 
-		wallet.debit(totalCost);
+        log.info("BUY request | user={} asset={} qty={}", user.getEmail(), assetSymbol, quantity);
 
-		
-		Trade trade = new Trade(user, asset, quantity, asset.getPrice(), TradeType.BUY);
-		tradeRepository.save(trade);
-		
-		Transaction tx = new Transaction(wallet, totalCost, TransactionType.DEBIT, TransactionSource.USER);
-		transactionRepository.save(tx);
-		
-		walletRepository.save(wallet);
-		
-		log.info("BUY successful | user={} asset={} cost={}", user.getEmail(), assetSymbol, totalCost);
-	
-	}
-	
-	@Transactional
-	public void sell(User user, String assetSymbol, BigDecimal quantity) {
-		
-		log.info("SELL request | user={} asset={} qty={}", user.getEmail(), assetSymbol, quantity);
-		
-		if(quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
-			throw new IllegalArgumentException("Quantity must be positive");
-		}
-		
-		Asset asset = assetRepository.findBySymbol(assetSymbol)
-				.orElseThrow(() -> new IllegalArgumentException("Asset not found"));
-		
-		Wallet wallet = walletRepository.findByUserId(user.getId())
-				.orElseThrow(() -> new IllegalStateException("Wallet not initialized"));
-		
-		BigDecimal ownedQuantity = tradeRepository.getNetQuantity(user, asset);
-		
-		if (ownedQuantity.compareTo(quantity) < 0) {
-			throw new IllegalStateException("Insufficient asset quantity");
-		}
-		
-		BigDecimal totalCredit = asset.getPrice().multiply(quantity).setScale(2, RoundingMode.HALF_UP);
-		
-		wallet.credit(totalCredit);
-		
-		Trade trade = new Trade(user, asset, quantity, asset.getPrice(), TradeType.SELL);
-		tradeRepository.save(trade);
-		
-		Transaction tx = new Transaction(wallet, totalCredit, TransactionType.CREDIT, TransactionSource.USER);
-		transactionRepository.save(tx);
-		
-		walletRepository.save(wallet);
-		
-		log.info("SELL successful | user={} asset={} credit={}", user.getEmail(), assetSymbol, totalCredit);
-	}
-	
-	public BigDecimal getHolding(User user, String assetSymbol) {
-		
-		Asset asset = assetRepository.findBySymbol(assetSymbol)
-				.orElseThrow(() -> new IllegalArgumentException("Asset not found"));
-		
-		return tradeRepository.getNetQuantity(user, asset);
-	}
-	
-	public List<PortfolioResponse> getPortfolio(User user) {
-	    List<Asset> assets = assetRepository.findAll();
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
 
-	    return assets.stream()
-	            .map(asset -> {
-	                BigDecimal qty = tradeRepository.getNetQuantity(user, asset);
+        Asset asset = assetRepository.findBySymbol(assetSymbol)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Asset not found: " + assetSymbol)
+                );
 
-	                if (qty.compareTo(BigDecimal.ZERO) <= 0) {
-	                    return null;
-	                }
+        Wallet wallet = walletRepository.findByUserId(user.getId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Wallet not initialized for user")
+                );
 
-	                return new PortfolioResponse(
-	                        asset.getSymbol(),
-	                        qty,
-	                        asset.getPrice(),
-	                        qty.multiply(asset.getPrice())
-	                );
-	            })
-	            .filter(Objects::nonNull)
-	            .toList();
-	}
+        BigDecimal totalCost = asset.getPrice()
+                .multiply(quantity)
+                .setScale(2, RoundingMode.HALF_UP);
 
-	public List<TradeHistoryResponse> getTradeHistory(User user) {
-	    return tradeRepository
-	            .findByUserOrderByExecutedAtDesc(user)
-	            .stream()
-	            .map(trade -> new TradeHistoryResponse(
-	                    trade.getAsset().getSymbol(),
-	                    trade.getQuantity(),
-	                    trade.getPriceAtExecution(),
-	                    trade.getTradeType(),
-	                    trade.getExecutedAt()
-	            ))
-	            .toList();
-	}
-	
+        if (wallet.getBalance().compareTo(totalCost) < 0) {
+            throw new InsufficientBalanceException();
+        }
+
+        wallet.debit(totalCost);
+
+        tradeRepository.save(
+                new Trade(user, asset, quantity, asset.getPrice(), TradeType.BUY)
+        );
+
+        transactionRepository.save(
+                new Transaction(wallet, totalCost, TransactionType.DEBIT, TransactionSource.USER)
+        );
+
+        walletRepository.save(wallet);
+
+        log.info("BUY successful | user={} asset={} cost={}",
+                user.getEmail(), assetSymbol, totalCost);
+    }
+
+    @Transactional
+    public void sell(User user, String assetSymbol, BigDecimal quantity) {
+
+        log.info("SELL request | user={} asset={} qty={}", user.getEmail(), assetSymbol, quantity);
+
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        Asset asset = assetRepository.findBySymbol(assetSymbol)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Asset not found: " + assetSymbol)
+                );
+
+        Wallet wallet = walletRepository.findByUserId(user.getId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Wallet not initialized for user")
+                );
+
+        BigDecimal ownedQuantity = tradeRepository.getNetQuantity(user, asset);
+
+        if (ownedQuantity.compareTo(quantity) < 0) {
+            throw new ConflictException("Insufficient asset quantity");
+        }
+
+        BigDecimal totalCredit = asset.getPrice()
+                .multiply(quantity)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        wallet.credit(totalCredit);
+
+        tradeRepository.save(
+                new Trade(user, asset, quantity, asset.getPrice(), TradeType.SELL)
+        );
+
+        transactionRepository.save(
+                new Transaction(wallet, totalCredit, TransactionType.CREDIT, TransactionSource.USER)
+        );
+
+        walletRepository.save(wallet);
+
+        log.info("SELL successful | user={} asset={} credit={}",
+                user.getEmail(), assetSymbol, totalCredit);
+    }
+
+    public BigDecimal getHolding(User user, String assetSymbol) {
+
+        Asset asset = assetRepository.findBySymbol(assetSymbol)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Asset not found: " + assetSymbol)
+                );
+
+        return tradeRepository.getNetQuantity(user, asset);
+    }
+
+    public List<PortfolioResponse> getPortfolio(User user) {
+
+        return assetRepository.findAll().stream()
+                .map(asset -> {
+                    BigDecimal qty = tradeRepository.getNetQuantity(user, asset);
+                    if (qty.compareTo(BigDecimal.ZERO) <= 0) return null;
+
+                    return new PortfolioResponse(
+                            asset.getSymbol(),
+                            qty,
+                            asset.getPrice(),
+                            qty.multiply(asset.getPrice())
+                    );
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    public List<TradeHistoryResponse> getTradeHistory(User user) {
+
+        return tradeRepository.findByUserOrderByExecutedAtDesc(user)
+                .stream()
+                .map(trade -> new TradeHistoryResponse(
+                        trade.getAsset().getSymbol(),
+                        trade.getQuantity(),
+                        trade.getPriceAtExecution(),
+                        trade.getTradeType(),
+                        trade.getExecutedAt()
+                ))
+                .toList();
+    }
 }

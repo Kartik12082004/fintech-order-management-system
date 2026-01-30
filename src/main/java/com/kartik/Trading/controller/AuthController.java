@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kartik.Trading.dto.request.LoginRequest;
 import com.kartik.Trading.dto.request.RegisterRequest;
 import com.kartik.Trading.dto.response.AuthResponse;
+import com.kartik.Trading.exception.ConflictException;
 import com.kartik.Trading.model.Role;
 import com.kartik.Trading.model.User;
 import com.kartik.Trading.model.Wallet;
@@ -64,7 +65,7 @@ public class AuthController {
 		
 		if (userRepository.existsByEmail(request.getEmail())) {
 		    log.warn("Registration failed — email already exists={}", request.getEmail());
-		    throw new IllegalArgumentException("Email already registered");
+		    throw new ConflictException("Email already registered");
 		}
 
 		

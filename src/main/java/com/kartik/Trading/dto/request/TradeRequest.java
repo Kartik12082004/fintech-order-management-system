@@ -15,7 +15,7 @@ public class TradeRequest {
 	@Positive
 	private BigDecimal quantity;
 	
-	public void setAssestSymbol(String assetSymbol) {
+	public void setAssetSymbol(String assetSymbol) {
 		this.assetSymbol = assetSymbol; 
 	}
 	
