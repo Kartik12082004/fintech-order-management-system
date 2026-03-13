@@ -31,10 +31,10 @@ public class Trade {
 	@ManyToOne(optional = false)
 	private Asset asset;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, precision = 19, scale = 4)
 	private BigDecimal quantity;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, precision = 19, scale = 4)
 	private BigDecimal priceAtExecution;
 	
 	@Enumerated(EnumType.STRING)

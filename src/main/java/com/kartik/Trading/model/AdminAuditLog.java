@@ -22,7 +22,7 @@ public class AdminAuditLog {
     @Column(name = "target_user")
     private String targetUser;  
 
-    @Column
+    @Column(precision = 19, scale = 4)
     private BigDecimal amount;    
 
     @Column(nullable = false)

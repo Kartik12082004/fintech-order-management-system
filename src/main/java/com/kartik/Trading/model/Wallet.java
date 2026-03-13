@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Version;
 
 @Entity
 public class Wallet {
@@ -23,8 +24,11 @@ public class Wallet {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, precision = 19, scale = 4)
 	private BigDecimal balance;
+	
+	@Version
+	private Long version;
 	
 	protected Wallet() {}
 	
@@ -43,6 +47,10 @@ public class Wallet {
 
 	public BigDecimal getBalance() {
 	    return balance;
+	}
+	
+	public Long getVersion() {
+		return version;
 	}
 	
 	public void credit(BigDecimal amount) {

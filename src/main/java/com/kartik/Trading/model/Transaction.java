@@ -31,7 +31,7 @@ public class Transaction {
 	@JoinColumn(name = "wallet_id", nullable = false)
 	private Wallet wallet;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, precision = 19, scale = 4)
 	private BigDecimal amount;
 	
 	@Enumerated(EnumType.STRING)

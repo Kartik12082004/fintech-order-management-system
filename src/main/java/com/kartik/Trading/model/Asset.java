@@ -24,7 +24,7 @@ public class Asset {
 	@Column(nullable = false, unique = true)
 	private String symbol;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, precision = 19, scale = 4)
 	private BigDecimal price;
 	
 }

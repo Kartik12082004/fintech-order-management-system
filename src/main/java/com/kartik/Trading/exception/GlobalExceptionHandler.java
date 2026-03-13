@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -103,5 +104,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Internal server error"));
     }
+	
+	@ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+	public ResponseEntity<Map<String, String>> handleOptimisticLockingFailure(
+			ObjectOptimisticLockingFailureException ex) {
+		
+		log.warn("Concurrency conflict detected: transaction aborted to prevent data corruption");
+
+	    return ResponseEntity.status(HttpStatus.CONFLICT)
+	            .body(Map.of("error", "Transaction failed due to heavy server traffic. Please retry your request."));
+	}
 	
 }
