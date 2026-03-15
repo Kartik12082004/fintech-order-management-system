@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: foms-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Kishu@143
+      POSTGRES_DB: trading_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: foms-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/trading_db
+      - SPRING_DATASOURCE_USERNAME=username
+      - SPRING_DATASOURCE_PASSWORD=password
+      - JWT_SECRET=sscTqlbxWhnKEAJOEH_L5um2dxWwmQ_j8JIOnaO2GN5tdOLao1LUj5IwWh0zMWDi
+
+volumes:
+  postgres-data:
