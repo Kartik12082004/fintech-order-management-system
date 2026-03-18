@@ -1,12 +1,12 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
     image: postgres:15
     container_name: foms-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Kishu@143
+      POSTGRES_USER: your_postgres_username
+      POSTGRES_PASSWORD: your_postgress_password
       POSTGRES_DB: trading_db
     ports:
       - "5432:5432"
