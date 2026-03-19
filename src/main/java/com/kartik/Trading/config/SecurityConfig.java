@@ -12,6 +12,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.kartik.Trading.security.JwtAuthFilter;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 @Configuration
 public class SecurityConfig {
 	
@@ -40,6 +42,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
 
                 .anyRequest().authenticated()
+            ).exceptionHandling(ex -> ex
+                    .authenticationEntryPoint((request, response, authException) ->
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
             );
 		
 		httpSecurity.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

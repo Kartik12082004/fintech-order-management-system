@@ -1,4 +1,4 @@
-package com.kartik.MiniOrderManagementSystem;
+package com.kartik.Trading;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
