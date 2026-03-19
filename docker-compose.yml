@@ -22,8 +22,8 @@ services:
       - db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/trading_db
-      - SPRING_DATASOURCE_USERNAME=username
-      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_USERNAME=your_postgres_username
+      - SPRING_DATASOURCE_PASSWORD=your_postgress_password
       - JWT_SECRET=sscTqlbxWhnKEAJOEH_L5um2dxWwmQ_j8JIOnaO2GN5tdOLao1LUj5IwWh0zMWDi
 
 volumes:
