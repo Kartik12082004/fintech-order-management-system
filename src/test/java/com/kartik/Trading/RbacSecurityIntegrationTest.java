@@ -34,13 +34,13 @@ public class RbacSecurityIntegrationTest extends BaseIntegrationTest {
     @Test
     @WithMockUser(username = "hacker@kartik.com", roles = {"USER"})
     void standardUserCannotAccessAdminEndpoint_Returns403() throws Exception {
-        mockMvc.perform(get("/api/admin/asset"))
+        mockMvc.perform(get("/api/admin/dashboard"))
                .andExpect(status().isForbidden());
     }
     
     @Test
     void unauthenticatedRequest_Returns401() throws Exception {
-        mockMvc.perform(get("/api/admin/asset"))
+        mockMvc.perform(get("/api/admin/dashboard"))
                .andExpect(status().isUnauthorized());
     }
 }

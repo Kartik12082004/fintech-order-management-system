@@ -72,7 +72,7 @@ public class WalletOptimisticLockingTest extends BaseIntegrationTest {
 		
 		assertEquals(1, lockExceptionCount.get(), "Defense Failed: Optimistic Locking did not trigger!");
 		
-		Wallet survivingWallet = walletRepository.findById(targetUser.getId()).orElseThrow();
+		Wallet survivingWallet = walletRepository.findByUserId(targetUser.getId()).orElseThrow();
 		assertEquals(0, new BigDecimal("20.00").compareTo(survivingWallet.getBalance()),
 				"Database Corruption: Balance is incorrect after concurrent attack!");
 	}

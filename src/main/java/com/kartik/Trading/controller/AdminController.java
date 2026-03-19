@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +17,7 @@ import com.kartik.Trading.dto.request.AdminFundWalletRequest;
 import com.kartik.Trading.dto.request.CreateAssetRequest;
 import com.kartik.Trading.model.User;
 import com.kartik.Trading.repository.UserRepository;
+import com.kartik.Trading.service.AdminAuditLogService;
 import com.kartik.Trading.service.AssetService;
 import com.kartik.Trading.service.WalletService;
 
@@ -33,13 +36,16 @@ public class AdminController {
 	private final UserRepository userRepository;
 	private final WalletService walletService;
 	private final AssetService assetService;
+	private final AdminAuditLogService adminAuditLogService;
 	
 	public AdminController(UserRepository userRepository,
 						   WalletService walletService,
-						   AssetService assetService) {
+						   AssetService assetService,
+						   AdminAuditLogService adminAuditLogService) {
 		this.userRepository = userRepository;
 		this.walletService = walletService;
 		this.assetService = assetService;
+		this.adminAuditLogService = adminAuditLogService;
 	}
 	
 	@Operation(
@@ -50,7 +56,9 @@ public class AdminController {
 	    """
 	)
 	@PostMapping("/fund-wallet")
-	public ResponseEntity<?> fundWallet(@Valid @RequestBody AdminFundWalletRequest request){
+	public ResponseEntity<?> fundWallet(
+			@Valid @RequestBody AdminFundWalletRequest request,
+			@AuthenticationPrincipal UserDetails adminDetails) {
 		
 		log.warn("ADMIN funding wallet | targetUser={} amount={}", request.getUserEmail(), request.getAmount());
 		
@@ -58,6 +66,14 @@ public class AdminController {
 				.orElseThrow(() -> new IllegalArgumentException("User not found"));
 		
 		walletService.systemCredit(user, request.getAmount());
+		
+		String adminEmail = (adminDetails != null) ? adminDetails.getUsername() : "SYSTEM";
+		adminAuditLogService.logAction(
+			"FUND_WALLET", 
+			adminEmail, 
+			user.getEmail(), 
+			request.getAmount()
+		);
 		
 		return ResponseEntity.ok(
 				Map.of(
@@ -90,6 +106,4 @@ public class AdminController {
 	            "price", request.getPrice()
 	    ));
 	}
-
-	
 }
